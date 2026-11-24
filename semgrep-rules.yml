@@ -1,0 +1,128 @@
+rules:
+  - id: bank.auth.client-controlled-identity
+    languages: [python]
+    severity: ERROR
+    message: "Клиент сам задаёт X-User-Id, а идентичность не проверяется: подмена пользователя и доступ к чужим банковским данным."
+    pattern: return int(x_user_id)
+    metadata: {cwe: "CWE-287", confidence: HIGH, category: security}
+  - id: bank.auth.untrusted-header
+    languages: [python]
+    severity: ERROR
+    message: "Идентификатор клиента берется из произвольного HTTP-заголовка; нет проверки токена, сессии или подписи."
+    pattern: |
+      async def get_current_user_id(x_user_id: str | None = Header(default=None)) -> int:
+          ...
+    metadata: {cwe: "CWE-306", confidence: HIGH, category: security}
+  - id: bank.transfer.check-then-update-race
+    languages: [python]
+    severity: ERROR
+    message: "Проверка остатка отдельным SELECT без блокировки допускает гонку переводов; возможны отрицательные остатки."
+    pattern: |
+      bal = await conn.fetchval("SELECT balance_cents FROM accounts WHERE id=$1", from_id)
+    metadata: {cwe: "CWE-362", confidence: HIGH, category: security}
+  - id: bank.transfer.unguarded-debit
+    languages: [python]
+    severity: ERROR
+    message: "UPDATE списания не содержит атомарного условия достаточности средств и контроля числа изменённых строк."
+    pattern: |
+      await conn.execute("UPDATE accounts SET balance_cents = balance_cents - $1 WHERE id=$2", amount, from_id)
+    metadata: {cwe: "CWE-841", confidence: HIGH, category: security}
+  - id: bank.transfer.authorization-before-tx
+    languages: [python]
+    severity: WARNING
+    message: "Авторизация счёта проводится до начала транзакции; повторить её под блокировкой в рамках операции."
+    pattern: |
+      await _must_own_account(user_id, from_id)
+    metadata: {cwe: "CWE-367", confidence: MEDIUM, category: security}
+  - id: bank.cache.cache-hit-empty-history
+    languages: [python]
+    severity: ERROR
+    message: "При наличии значения в Redis история транзакций неверно заменяется пустым списком."
+    pattern: |
+      if cached:
+          return []
+    metadata: {cwe: "CWE-840", confidence: HIGH, category: correctness}
+  - id: bank.cache.wrong-invalidation-key
+    languages: [python]
+    severity: WARNING
+    message: "Удаляемый ключ tx:<user_id> не совпадает с используемыми ключами tx:<user_id>:<limit>:<search>."
+    pattern: |
+      await r.delete(f"tx:{user_id}")
+    metadata: {cwe: "CWE-682", confidence: HIGH, category: correctness}
+  - id: bank.db.no-check-on-balance
+    languages: [python]
+    severity: ERROR
+    message: "balance_cents не имеет CHECK >= 0; база допускает нарушение финансового инварианта."
+    pattern-regex: 'balance_cents BIGINT NOT NULL DEFAULT 0'
+    metadata: {cwe: "CWE-20", confidence: HIGH, category: security}
+  - id: bank.db.no-transaction-foreign-key
+    languages: [python]
+    severity: WARNING
+    message: "from_account_id в таблице transactions не связан внешним ключом с accounts."
+    pattern-regex: 'from_account_id BIGINT NOT NULL'
+    metadata: {cwe: "CWE-754", confidence: HIGH, category: correctness}
+  - id: bank.db.no-check-on-transaction-amount
+    languages: [python]
+    severity: WARNING
+    message: "Таблица transactions не ограничивает amount_cents положительными значениями."
+    pattern-regex: 'amount_cents BIGINT NOT NULL'
+    metadata: {cwe: "CWE-20", confidence: HIGH, category: security}
+  - id: bank.deploy.hardcoded-db-password
+    languages: [generic]
+    severity: ERROR
+    paths: {include: ["**/docker-compose.yml"]}
+    message: "Пароль администратора PostgreSQL задан прямо в docker-compose.yml и равен postgres."
+    pattern-regex: 'POSTGRES_PASSWORD:\s*postgres\b'
+    metadata: {cwe: "CWE-798", confidence: HIGH, category: security}
+  - id: bank.deploy.admin-connection-string
+    languages: [generic]
+    severity: ERROR
+    paths: {include: ["**/docker-compose.yml"]}
+    message: "API использует суперпользователя PostgreSQL и пароль в открытой строке подключения."
+    pattern-regex: 'postgresql://postgres:postgres@postgres:5432/bank'
+    metadata: {cwe: "CWE-250", confidence: HIGH, category: security}
+  - id: bank.deploy.exposed-postgresql
+    languages: [generic]
+    severity: ERROR
+    paths: {include: ["**/docker-compose.yml"]}
+    message: "Порт PostgreSQL 5432 опубликован на интерфейсах хоста, а не только во внутренней сети."
+    pattern-regex: '5432:5432'
+    metadata: {cwe: "CWE-668", confidence: HIGH, category: security}
+  - id: bank.deploy.exposed-redis
+    languages: [generic]
+    severity: ERROR
+    paths: {include: ["**/docker-compose.yml"]}
+    message: "Порт Redis 6379 опубликован на хосте без указанной аутентификации/TLS."
+    pattern-regex: '6379:6379'
+    metadata: {cwe: "CWE-668", confidence: HIGH, category: security}
+  - id: bank.deploy.unprotected-api-port
+    languages: [generic]
+    severity: WARNING
+    paths: {include: ["**/docker-compose.yml"]}
+    message: "REST API опубликован по 8000; TLS-терминация и gateway в предоставленном составе отсутствуют."
+    pattern-regex: '8000:8000'
+    metadata: {cwe: "CWE-319 (deployment-dependent)", confidence: MEDIUM, category: security}
+  - id: bank.config.dev-default
+    languages: [python]
+    severity: INFO
+    message: "APP_ENV по умолчанию dev; проверить явное назначение production-профиля при выпуске."
+    pattern: 'app_env: str = "dev"'
+    metadata: {confidence: MEDIUM, category: security}
+  - id: bank.sql.dynamic-query-review
+    languages: [python]
+    severity: INFO
+    message: "Ручная проверка SQL-конкатенации: здесь индекс параметра i формируется сервером, а search передаётся отдельно; SQLi не подтверждена."
+    pattern-regex: 'sql \+= f" AND CAST'
+    metadata: {cwe: "CWE-89 (not validated)", confidence: LOW, category: audit}
+  - id: bank.main.invalid-auth-import
+    languages: [python]
+    severity: INFO
+    message: "Импорт user_id не соответствует функции get_current_user_id в security.py; блокер запуска приложения."
+    pattern: 'from app.security import user_id'
+    metadata: {category: availability, confidence: HIGH}
+  - id: bank.main.invalid-schema-imports
+    languages: [python]
+    severity: INFO
+    message: "TransferIn/TxOut не объявлены в schemas.py; блокер запуска приложения."
+    pattern: 'from app.schemas import TransferIn, TxOut'
+    metadata: {category: availability, confidence: HIGH}

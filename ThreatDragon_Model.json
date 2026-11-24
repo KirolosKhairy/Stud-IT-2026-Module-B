@@ -1,0 +1,1285 @@
+{
+  "version": "2.6.2",
+  "summary": {
+    "title": "Банковский микросервис",
+    "owner": "Элия Киролос Хайри Фавзи",
+    "description": "Перевод средств и история транзакций. Студ-ИТ 2026, модуль B. Модель угроз для учебного FastAPI-сервиса с PostgreSQL и Redis. Источники: app/main.py, crud.py, db.py, security.py, redis_client.py, schemas.py, docker-compose.yml. Показаны только реализованные потоки: запись значений в Redis в исходном коде отсутствует. Строка SQL в поиске строится динамически, но пользовательский search передан параметром asyncpg; эксплуатируемая SQL-инъекция на этом участке не подтверждена. Три наиболее критичные угрозы: подмена идентификатора/IDOR, race condition, экспозиция БД/Redis.",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [],
+    "diagramTop": 1,
+    "threatTop": 4,
+    "diagrams": [
+      {
+        "cells": [
+          {
+            "shape": "trust-boundary-curve",
+            "attrs": {
+              "line": {
+                "stroke": "#b45309",
+                "strokeWidth": 2,
+                "targetMarker": "",
+                "strokeDasharray": "8 6",
+                "sourceMarker": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 1,
+            "connector": "normal",
+            "data": {
+              "type": "tm.Boundary",
+              "name": "TB2: API / Данные",
+              "description": "TB2 — API / сеть данных",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false,
+              "crossingFlows": [],
+              "containedElements": []
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "TB2: API / Данные",
+                    "fontFamily": "Arial",
+                    "fontSize": 14,
+                    "fill": "#76512a"
+                  },
+                  "text": {
+                    "text": "TB2: API / Данные",
+                    "fontSize": 14,
+                    "fill": "#76512a",
+                    "fontFamily": "Arial"
+                  },
+                  "rect": {
+                    "fill": "#ffffff",
+                    "stroke": "none"
+                  }
+                },
+                "position": {
+                  "distance": 0,
+                  "offset": -5
+                }
+              }
+            ],
+            "id": "abba5b01-0988-499d-9fa5-07b577e8e507",
+            "source": {
+              "x": 875,
+              "y": 65
+            },
+            "target": {
+              "x": 875,
+              "y": 720
+            },
+            "vertices": []
+          },
+          {
+            "shape": "trust-boundary-curve",
+            "attrs": {
+              "line": {
+                "stroke": "#b45309",
+                "strokeWidth": 2,
+                "targetMarker": "",
+                "strokeDasharray": "8 6",
+                "sourceMarker": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 1,
+            "connector": "normal",
+            "data": {
+              "type": "tm.Boundary",
+              "name": "TB1: Клиент / API",
+              "description": "TB1 — внешний клиент / API",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false,
+              "crossingFlows": [],
+              "containedElements": []
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "TB1: Клиент / API",
+                    "fontFamily": "Arial",
+                    "fontSize": 14,
+                    "fill": "#76512a"
+                  },
+                  "text": {
+                    "text": "TB1: Клиент / API",
+                    "fontSize": 14,
+                    "fill": "#76512a",
+                    "fontFamily": "Arial"
+                  },
+                  "rect": {
+                    "fill": "#ffffff",
+                    "stroke": "none"
+                  }
+                },
+                "position": {
+                  "distance": 0,
+                  "offset": -5
+                }
+              }
+            ],
+            "id": "f62d9a80-bd10-4d04-aaa6-9ea259d767ab",
+            "source": {
+              "x": 330,
+              "y": 60
+            },
+            "target": {
+              "x": 330,
+              "y": 720
+            },
+            "vertices": [],
+            "tools": {
+              "items": [
+                "boundary",
+                "button-remove",
+                "vertices",
+                "source-arrowhead",
+                "target-arrowhead",
+                "boundary",
+                "button-remove",
+                "vertices",
+                "source-arrowhead",
+                "target-arrowhead",
+                "boundary",
+                "button-remove",
+                "vertices",
+                "source-arrowhead",
+                "target-arrowhead",
+                "boundary",
+                "button-remove",
+                "vertices",
+                "source-arrowhead",
+                "target-arrowhead"
+              ],
+              "name": null
+            }
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 2,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 2,
+            "connector": "normal",
+            "data": {
+              "type": "tm.Flow",
+              "name": "1. POST /transfer\n2. GET /transactions",
+              "description": "1. POST /transfer\n2. GET /transactions",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": true,
+              "protocol": "HTTP/REST",
+              "threats": [],
+              "trustBoundaryIds": []
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "1. POST /transfer\n2. GET /transactions",
+                    "fontSize": 16,
+                    "fill": "#172b4d",
+                    "fontFamily": "Arial"
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "offset": -20
+                }
+              }
+            ],
+            "id": "d12b6973-65f3-4624-95c2-8f92eeff5c84",
+            "source": {
+              "cell": "cc790af9-406f-448b-9207-59b6a111c5a4",
+              "anchor": {
+                "name": "right",
+                "args": {
+                  "dx": 0,
+                  "dy": -25
+                }
+              }
+            },
+            "target": {
+              "cell": "81858345-262b-462a-ba9d-162c5e3a39f2",
+              "anchor": {
+                "name": "left",
+                "args": {
+                  "dx": 0,
+                  "dy": -25
+                }
+              }
+            },
+            "vertices": [
+              {
+                "x": 275,
+                "y": 315
+              },
+              {
+                "x": 385,
+                "y": 315
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 2,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 2,
+            "connector": "normal",
+            "data": {
+              "type": "tm.Flow",
+              "name": "3. HTTP JSON: статус\nили история",
+              "description": "3. HTTP JSON: статус\nили история",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": true,
+              "protocol": "HTTP/REST",
+              "threats": [],
+              "trustBoundaryIds": []
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "3. HTTP JSON: статус\nили история",
+                    "fontSize": 16,
+                    "fill": "#172b4d",
+                    "fontFamily": "Arial"
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "offset": -20
+                }
+              }
+            ],
+            "id": "d1b706b9-8b28-4721-b686-1af1cdab10a7",
+            "source": {
+              "cell": "81858345-262b-462a-ba9d-162c5e3a39f2",
+              "anchor": {
+                "name": "left",
+                "args": {
+                  "dx": 0,
+                  "dy": 30
+                }
+              }
+            },
+            "target": {
+              "cell": "cc790af9-406f-448b-9207-59b6a111c5a4",
+              "anchor": {
+                "name": "right",
+                "args": {
+                  "dx": 0,
+                  "dy": 30
+                }
+              }
+            },
+            "vertices": [
+              {
+                "x": 385,
+                "y": 380
+              },
+              {
+                "x": 275,
+                "y": 380
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 2,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 2,
+            "connector": "normal",
+            "data": {
+              "type": "tm.Flow",
+              "name": "4. SELECT / UPDATE /\nINSERT accounts, transactions",
+              "description": "4. SELECT / UPDATE /\nINSERT accounts, transactions",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "asyncpg / PostgreSQL",
+              "threats": [],
+              "trustBoundaryIds": []
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "4. SELECT / UPDATE /\nINSERT accounts, transactions",
+                    "fontSize": 16,
+                    "fill": "#172b4d",
+                    "fontFamily": "Arial"
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "offset": -20
+                }
+              }
+            ],
+            "id": "1648b281-80f8-4cf7-acb7-9b74d118b9a8",
+            "source": {
+              "cell": "81858345-262b-462a-ba9d-162c5e3a39f2",
+              "anchor": {
+                "name": "top",
+                "args": {
+                  "dx": 55,
+                  "dy": 0
+                }
+              }
+            },
+            "target": {
+              "cell": "729c8664-4e0d-41cf-81a5-536ced5d64df",
+              "anchor": {
+                "name": "left",
+                "args": {
+                  "dx": 0,
+                  "dy": -25
+                }
+              }
+            },
+            "vertices": [
+              {
+                "x": 615,
+                "y": 150
+              },
+              {
+                "x": 920,
+                "y": 150
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 2,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 2,
+            "connector": "normal",
+            "data": {
+              "type": "tm.Flow",
+              "name": "5. Результаты SQL-запросов /\nID транзакции",
+              "description": "5. Результаты SQL-запросов /\nID транзакции",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "asyncpg / PostgreSQL",
+              "threats": [],
+              "trustBoundaryIds": []
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "5. Результаты SQL-запросов /\nID транзакции",
+                    "fontSize": 16,
+                    "fill": "#172b4d",
+                    "fontFamily": "Arial"
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "offset": -20
+                }
+              }
+            ],
+            "id": "4a4e970b-94f8-4596-b40b-ae3b7028c883",
+            "source": {
+              "cell": "729c8664-4e0d-41cf-81a5-536ced5d64df",
+              "anchor": {
+                "name": "left",
+                "args": {
+                  "dx": 0,
+                  "dy": 30
+                }
+              }
+            },
+            "target": {
+              "cell": "81858345-262b-462a-ba9d-162c5e3a39f2",
+              "anchor": {
+                "name": "right",
+                "args": {
+                  "dx": 0,
+                  "dy": -25
+                }
+              }
+            },
+            "vertices": [
+              {
+                "x": 930,
+                "y": 205
+              },
+              {
+                "x": 745,
+                "y": 325
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 2,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 2,
+            "connector": "normal",
+            "data": {
+              "type": "tm.Flow",
+              "name": "6. GET tx:user:limit:search",
+              "description": "6. GET tx:user:limit:search",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "Redis protocol",
+              "threats": [],
+              "trustBoundaryIds": []
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "6. GET tx:user:limit:search",
+                    "fontSize": 16,
+                    "fill": "#172b4d",
+                    "fontFamily": "Arial"
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "offset": -20
+                }
+              }
+            ],
+            "id": "04d6cd9b-ccd8-44a4-a5e5-93fff9bbd3d0",
+            "source": {
+              "cell": "81858345-262b-462a-ba9d-162c5e3a39f2",
+              "anchor": {
+                "name": "right",
+                "args": {
+                  "dx": 0,
+                  "dy": 35
+                }
+              }
+            },
+            "target": {
+              "cell": "22b5cf41-fc32-4fba-8ebb-9409d82ae695",
+              "anchor": {
+                "name": "left",
+                "args": {
+                  "dx": 0,
+                  "dy": -25
+                }
+              }
+            },
+            "vertices": [
+              {
+                "x": 765,
+                "y": 385
+              },
+              {
+                "x": 930,
+                "y": 540
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 2,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 2,
+            "connector": "normal",
+            "data": {
+              "type": "tm.Flow",
+              "name": "7. Cache response",
+              "description": "7. Cache response",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "Redis protocol",
+              "threats": [],
+              "trustBoundaryIds": []
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "7. Cache response",
+                    "fontSize": 16,
+                    "fill": "#172b4d",
+                    "fontFamily": "Arial"
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "offset": -20
+                }
+              }
+            ],
+            "id": "600ffdaa-fe92-4dac-ad0f-c78869f97a06",
+            "source": {
+              "cell": "22b5cf41-fc32-4fba-8ebb-9409d82ae695",
+              "anchor": {
+                "name": "left",
+                "args": {
+                  "dx": 0,
+                  "dy": 15
+                }
+              }
+            },
+            "target": {
+              "cell": "81858345-262b-462a-ba9d-162c5e3a39f2",
+              "anchor": {
+                "name": "bottom",
+                "args": {
+                  "dx": 35,
+                  "dy": 0
+                }
+              }
+            },
+            "vertices": [
+              {
+                "x": 930,
+                "y": 580
+              },
+              {
+                "x": 595,
+                "y": 580
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 2,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 2,
+            "connector": "normal",
+            "data": {
+              "type": "tm.Flow",
+              "name": "8. DEL tx:user после transfer",
+              "description": "8. DEL tx:user после transfer",
+              "outOfScope": false,
+              "isTrustBoundary": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "Redis protocol",
+              "threats": [],
+              "trustBoundaryIds": []
+            },
+            "labels": [
+              {
+                "attrs": {
+                  "label": {
+                    "text": "8. DEL tx:user после transfer",
+                    "fontSize": 16,
+                    "fill": "#172b4d",
+                    "fontFamily": "Arial"
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "offset": -20
+                }
+              }
+            ],
+            "id": "c5f0aeac-98b9-41d0-90cc-a9e6563a889d",
+            "source": {
+              "cell": "81858345-262b-462a-ba9d-162c5e3a39f2",
+              "anchor": {
+                "name": "bottom",
+                "args": {
+                  "dx": -55,
+                  "dy": 0
+                }
+              }
+            },
+            "target": {
+              "cell": "22b5cf41-fc32-4fba-8ebb-9409d82ae695",
+              "anchor": {
+                "name": "bottom",
+                "args": {
+                  "dx": 0,
+                  "dy": 0
+                }
+              }
+            },
+            "vertices": [
+              {
+                "x": 505,
+                "y": 680
+              },
+              {
+                "x": 1130,
+                "y": 680
+              }
+            ]
+          },
+          {
+            "position": {
+              "x": 30,
+              "y": 290
+            },
+            "size": {
+              "width": 190,
+              "height": 100
+            },
+            "attrs": {
+              "text": {
+                "fontSize": 18,
+                "fill": "#172b4d",
+                "fontFamily": "Arial",
+                "text": "Клиент банка",
+                "strokeDasharray": ""
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1,
+                "strokeDasharray": ""
+              }
+            },
+            "visible": true,
+            "shape": "actor",
+            "zIndex": 3,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "23575544-f38b-414e-bc78-6b6a17d15b6d"
+                },
+                {
+                  "group": "right",
+                  "id": "b099d3be-a22a-4ec2-9adc-f70f53dbb544"
+                },
+                {
+                  "group": "bottom",
+                  "id": "de709f59-2ee5-4918-865e-3d4fe1d02316"
+                },
+                {
+                  "group": "left",
+                  "id": "59667f41-d8d3-41ba-8431-523dad759b81"
+                }
+              ]
+            },
+            "id": "cc790af9-406f-448b-9207-59b6a111c5a4",
+            "data": {
+              "name": "Клиент банка",
+              "description": "Внешний пользователь. Управляет параметрами запросов, заголовками и идентификаторами счетов.",
+              "type": "tm.Actor",
+              "isTrustBoundary": false,
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "threats": [],
+              "hasOpenThreats": false,
+              "providesAuthentication": false
+            }
+          },
+          {
+            "position": {
+              "x": 440,
+              "y": 270
+            },
+            "size": {
+              "width": 240,
+              "height": 160
+            },
+            "attrs": {
+              "text": {
+                "fontSize": 17,
+                "fill": "#172b4d",
+                "fontFamily": "Arial",
+                "text": "FastAPI\nREST /transfer\nREST /transactions",
+                "strokeDasharray": ""
+              },
+              "body": {
+                "stroke": "#334155",
+                "strokeWidth": 2,
+                "strokeDasharray": ""
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 3,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "ff0587da-73c1-40b0-ae04-ca673a2fb851"
+                },
+                {
+                  "group": "right",
+                  "id": "ad8e189e-c81b-46e6-9c04-f45869b88611"
+                },
+                {
+                  "group": "bottom",
+                  "id": "c53301df-7c55-4d5a-b259-feefa120ef66"
+                },
+                {
+                  "group": "left",
+                  "id": "260e6cdf-ebc2-401f-9771-39c44b3a2259"
+                }
+              ]
+            },
+            "id": "81858345-262b-462a-ba9d-162c5e3a39f2",
+            "data": {
+              "name": "FastAPI\nREST /transfer\nREST /transactions",
+              "description": "HTTP API: идентификация через X-User-Id, SQL-операции asyncpg, доступ к Redis.",
+              "type": "tm.Process",
+              "isTrustBoundary": false,
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "threats": [
+                {
+                  "status": "Open",
+                  "severity": "Critical",
+                  "title": "T1 — Подмена клиента через X-User-Id / IDOR",
+                  "type": "Spoofing",
+                  "description": "Поверхность: внешние POST /transfer и GET /transactions (app/security.py:3-13; app/crud.py:5-12).\n    Заголовок X-User-Id полностью контролирует отправитель. Код преобразует строку в int, но не проверяет токен/подпись или сессию. Условие owner_user_id проверяется относительно неподтверждённого user_id, поэтому при подмене идентификатора жертвы возможен доступ к её истории и запрос списания с её счёта.\n    Impact: несанкционированный перевод и раскрытие финансовой информации. Бизнес: прямые денежные потери, претензии клиентов, регуляторные последствия. Риск Critical из-за доступности API и отсутствия реальной аутентификации.",
+                  "mitigation": "Код: заменить доверие к X-User-Id проверкой access token (OIDC/OAuth2/JWT с iss/aud/exp/signature) и получать субъект только из проверенной сессии; проверять право на from_account_id и доступ к истории на каждом запросе (BOLA).\n    Архитектура: API Gateway с обязательной аутентификацией, identity service, минимальные привилегии и разделение ролей.\n    Процесс: интеграционные негативные тесты IDOR для двух пользователей, security review авторизации, gate на нарушение доступа перед релизом.",
+                  "modelType": "STRIDE",
+                  "id": "adc46d19-3b29-4fc0-800e-1923df9b6cf9"
+                },
+                {
+                  "status": "Open",
+                  "severity": "Critical",
+                  "title": "T2 — Гонка при параллельном списании средств",
+                  "type": "Tampering",
+                  "description": "Поверхность: POST /transfer, app/crud.py:20-35.\n    SELECT balance_cents читает остаток без FOR UPDATE. Проверка bal < amount и последующий UPDATE разделены. Две параллельные транзакции способны прочитать один и тот же остаток и выполнить два списания. PostgreSQL блокирует обновления, но второй UPDATE не перепроверяет достаточность остатка; изоляция READ COMMITTED не устраняет этот сценарий.\n    Impact: отрицательные остатки и нарушение учёта средств. Бизнес: прямой финансовый убыток, необходимость сверки, нарушение целостности реестра; риск Critical.",
+                  "mitigation": "Код: атомарный UPDATE ... WHERE id=$2 AND balance_cents >= $1 RETURNING ... с проверкой результата либо SELECT ... FOR UPDATE до проверки баланса; сохранять обе проводки и запись транзакции в одной DB-транзакции.\n    Инфраструктура/БД: CHECK(balance_cents >= 0), идемпотентность перевода по request-id; надёжный механизм транзакций и мониторинг отрицательных остатков.\n    Процесс: параллельные нагрузочные тесты, property-based tests инварианта баланса, обязательная проверка денежных операций на code review.",
+                  "modelType": "STRIDE",
+                  "id": "d53c9407-b14d-4867-b44a-0771d624757c"
+                }
+              ],
+              "hasOpenThreats": true
+            }
+          },
+          {
+            "position": {
+              "x": 1000,
+              "y": 120
+            },
+            "size": {
+              "width": 260,
+              "height": 110
+            },
+            "attrs": {
+              "text": {
+                "fontSize": 17,
+                "fill": "#172b4d",
+                "fontFamily": "Arial",
+                "text": "PostgreSQL\naccounts / transactions",
+                "strokeDasharray": ""
+              },
+              "body": {
+                "fill": "#f8fafc",
+                "opacity": 1,
+                "fillOpacity": 1,
+                "stroke": "#334155",
+                "strokeWidth": 2,
+                "strokeDasharray": ""
+              },
+              "topLine": {
+                "stroke": "#334155",
+                "strokeWidth": 2,
+                "refD": null,
+                "strokeDasharray": "",
+                "d": "M 0 8 L 260 8",
+                "refDy": null
+              },
+              "bottomLine": {
+                "stroke": "#334155",
+                "strokeWidth": 2,
+                "refDy": null,
+                "refD": null,
+                "strokeDasharray": "",
+                "d": "M 0 102 L 260 102"
+              }
+            },
+            "visible": true,
+            "shape": "store",
+            "zIndex": 3,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "75188e9f-ea90-4bea-a1cc-e686c55ac32e"
+                },
+                {
+                  "group": "right",
+                  "id": "6cf7f07d-840d-48df-8c2e-1d393d93454f"
+                },
+                {
+                  "group": "bottom",
+                  "id": "7c05631b-10f9-49a1-978b-70dadacdc2ec"
+                },
+                {
+                  "group": "left",
+                  "id": "4e23f8ad-d983-4fd5-a02f-21c8ed21dd54"
+                }
+              ]
+            },
+            "id": "729c8664-4e0d-41cf-81a5-536ced5d64df",
+            "data": {
+              "name": "PostgreSQL\naccounts / transactions",
+              "description": "Хранит идентификаторы владельцев, остатки, записи финансовых операций.",
+              "type": "tm.Store",
+              "isTrustBoundary": false,
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "threats": [
+                {
+                  "status": "Open",
+                  "severity": "High",
+                  "title": "T3 — Открытые порты PostgreSQL/Redis и известный пароль БД",
+                  "type": "Information disclosure",
+                  "description": "Поверхность: docker-compose.yml:7,11,18,23.\n    POSTGRES_PASSWORD=postgres и DSN postgresql://postgres:postgres@postgres:5432/bank. Публикация портов 5432:5432 и 6379:6379 без host-IP в Docker Compose означает проброс на интерфейсы хоста. Отсутствуют описанные firewall policy, Redis ACL/TLS и отдельный ограниченный пользователь БД.\n    Impact: при сетевой доступности атакующий может получить прямой доступ к данным и изменять транзакции; возможно компрометировать Redis. Бизнес: массовая утечка, манипуляция балансами, простои, штрафы. Серьёзность High (может стать Critical при публичной экспозиции).",
+                  "mitigation": "Инфраструктура: убрать публикацию PostgreSQL/Redis на хост, поместить в закрытую сеть, межсетевые правила, TLS, Redis ACL.\n    Архитектура: отдельный DB-пользователь с минимальными правами для API, secrets manager вместо паролей в YAML; сетевые зоны API/data.\n    Процесс: SAST/IaC scanning и secret scanning в CI, контроль конфигураций на этапе deployment, ротация скомпрометированных секретов.",
+                  "modelType": "STRIDE",
+                  "id": "b2a2992b-b03a-4866-bb28-ecd144fd8596"
+                }
+              ],
+              "hasOpenThreats": true,
+              "isALog": false,
+              "storesCredentials": true,
+              "isEncrypted": false,
+              "isSigned": false
+            }
+          },
+          {
+            "position": {
+              "x": 1000,
+              "y": 510
+            },
+            "size": {
+              "width": 260,
+              "height": 110
+            },
+            "attrs": {
+              "text": {
+                "fontSize": 17,
+                "fill": "#172b4d",
+                "fontFamily": "Arial",
+                "text": "Redis\ncache tx:*",
+                "strokeDasharray": ""
+              },
+              "body": {
+                "fill": "#f8fafc",
+                "opacity": 1,
+                "fillOpacity": 1,
+                "stroke": "#334155",
+                "strokeWidth": 2,
+                "strokeDasharray": ""
+              },
+              "topLine": {
+                "stroke": "#334155",
+                "strokeWidth": 2,
+                "refD": null,
+                "strokeDasharray": "",
+                "d": "M 0 8 L 260 8",
+                "refDy": null
+              },
+              "bottomLine": {
+                "stroke": "#334155",
+                "strokeWidth": 2,
+                "refDy": null,
+                "refD": null,
+                "strokeDasharray": "",
+                "d": "M 0 102 L 260 102"
+              }
+            },
+            "visible": true,
+            "shape": "store",
+            "zIndex": 3,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "220de870-4c0c-4e8d-813b-aff8e329cf2b"
+                },
+                {
+                  "group": "right",
+                  "id": "92e01f05-02fd-4678-81c0-c0b66dbca6a9"
+                },
+                {
+                  "group": "bottom",
+                  "id": "121f7d4f-2b24-4ddd-86a8-18ff6cf2c919"
+                },
+                {
+                  "group": "left",
+                  "id": "5b7fac9e-5846-4c4d-a754-b7576a21f082"
+                }
+              ]
+            },
+            "id": "22b5cf41-fc32-4fba-8ebb-9409d82ae695",
+            "data": {
+              "name": "Redis\ncache tx:*",
+              "description": "get(cache_key) для истории; delete(tx:user_id) после перевода. SET в коде не найден.",
+              "type": "tm.Store",
+              "isTrustBoundary": false,
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "threats": [],
+              "hasOpenThreats": false,
+              "isALog": false,
+              "storesCredentials": false,
+              "isEncrypted": false,
+              "isSigned": false
+            }
+          }
+        ],
+        "version": "2.6.2",
+        "title": "DFD — Потоки денег и истории транзакций",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "diagramType": "STRIDE",
+        "id": 0
+      }
+    ],
+    "reviewer": ""
+  }
+}

@@ -1,0 +1,721 @@
+{
+  "version": "1.186.0",
+  "results": [
+    {
+      "check_id": "bank.config.dev-default",
+      "path": "microservice/app/config.py",
+      "start": {
+        "line": 6,
+        "col": 5,
+        "offset": 119
+      },
+      "end": {
+        "line": 6,
+        "col": 25,
+        "offset": 139
+      },
+      "extra": {
+        "message": "APP_ENV по умолчанию dev; проверить явное назначение production-профиля при выпуске.",
+        "metadata": {
+          "confidence": "MEDIUM",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "INFO",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "manual.idor.unauthenticated-transfer-impersonation",
+      "path": "microservice/app/crud.py",
+      "start": {
+        "line": 5,
+        "col": 1
+      },
+      "end": {
+        "line": 16,
+        "col": 46
+      },
+      "extra": {
+        "message": "IDOR/authorization bypass: from_account_id сопоставляется с owner_user_id=user_id, но user_id принимается из X-User-Id без проверки. Поменяв заголовок на идентификатор владельца другого счёта, запрос может обойти проверку владения и инициировать списание. В динамике не проверено из-за ошибок импорта в предоставленном коде. Защита: реальный auth subject, проверка владения в банковской транзакции, тесты BOLA.",
+        "severity": "ERROR",
+        "lines": "async def _must_own_account(user_id: int, account_id: int) -> None:\n    pool = await get_pool()\n    async with pool.acquire() as conn:\n        ok = await conn.fetchval(\n            \"SELECT 1 FROM accounts WHERE id=$1 AND owner_user_id=$2\",\n            account_id, user_id\n        )\n        if not ok:\n            raise HTTPException(status_code=403, detail=\"Forbidden\")\n\nasync def transfer(user_id: int, from_id: int, to_id: int, amount: int) -> int:\n    await _must_own_account(user_id, from_id)",
+        "metadata": {
+          "cwe": "CWE-639 / CWE-863",
+          "category": "security",
+          "finding_origin": "Manual source review",
+          "analysis_type": "Manual IDOR / broken authorization assessment",
+          "assessment": "confirmed_source_code_weakness_not_dynamically_exploited",
+          "reviewer_verified": true,
+          "test_status": "static_review_only",
+          "note": "Отдельно добавлено вручную согласно условию конкурса; это не результат правила Semgrep."
+        }
+      }
+    },
+    {
+      "check_id": "bank.transfer.authorization-before-tx",
+      "path": "microservice/app/crud.py",
+      "start": {
+        "line": 16,
+        "col": 5,
+        "offset": 557
+      },
+      "end": {
+        "line": 16,
+        "col": 46,
+        "offset": 598
+      },
+      "extra": {
+        "message": "Авторизация счёта проводится до начала транзакции; повторить её под блокировкой в рамках операции.",
+        "metadata": {
+          "cwe": "CWE-367",
+          "confidence": "MEDIUM",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "WARNING",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.transfer.check-then-update-race",
+      "path": "microservice/app/crud.py",
+      "start": {
+        "line": 22,
+        "col": 13,
+        "offset": 738
+      },
+      "end": {
+        "line": 22,
+        "col": 97,
+        "offset": 822
+      },
+      "extra": {
+        "message": "Проверка остатка отдельным SELECT без блокировки допускает гонку переводов; возможны отрицательные остатки.",
+        "metadata": {
+          "cwe": "CWE-362",
+          "confidence": "HIGH",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "ERROR",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.transfer.unguarded-debit",
+      "path": "microservice/app/crud.py",
+      "start": {
+        "line": 32,
+        "col": 13,
+        "offset": 1265
+      },
+      "end": {
+        "line": 32,
+        "col": 118,
+        "offset": 1370
+      },
+      "extra": {
+        "message": "UPDATE списания не содержит атомарного условия достаточности средств и контроля числа изменённых строк.",
+        "metadata": {
+          "cwe": "CWE-841",
+          "confidence": "HIGH",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "ERROR",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.cache.wrong-invalidation-key",
+      "path": "microservice/app/crud.py",
+      "start": {
+        "line": 40,
+        "col": 5,
+        "offset": 1706
+      },
+      "end": {
+        "line": 40,
+        "col": 36,
+        "offset": 1737
+      },
+      "extra": {
+        "message": "Удаляемый ключ tx:<user_id> не совпадает с используемыми ключами tx:<user_id>:<limit>:<search>.",
+        "metadata": {
+          "cwe": "CWE-682",
+          "confidence": "HIGH",
+          "category": "correctness",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "WARNING",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.cache.cache-hit-empty-history",
+      "path": "microservice/app/crud.py",
+      "start": {
+        "line": 47,
+        "col": 5,
+        "offset": 1951
+      },
+      "end": {
+        "line": 48,
+        "col": 18,
+        "offset": 1979
+      },
+      "extra": {
+        "message": "При наличии значения в Redis история транзакций неверно заменяется пустым списком.",
+        "metadata": {
+          "cwe": "CWE-840",
+          "confidence": "HIGH",
+          "category": "correctness",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "ERROR",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.sql.dynamic-query-review",
+      "path": "microservice/app/crud.py",
+      "start": {
+        "line": 61,
+        "col": 13,
+        "offset": 2351
+      },
+      "end": {
+        "line": 61,
+        "col": 31,
+        "offset": 2369
+      },
+      "extra": {
+        "message": "Ручная проверка SQL-конкатенации: здесь индекс параметра i формируется сервером, а search передаётся отдельно; SQLi не подтверждена.",
+        "metadata": {
+          "cwe": "CWE-89 (not validated)",
+          "confidence": "LOW",
+          "category": "audit",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "INFO",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.db.no-check-on-balance",
+      "path": "microservice/app/db.py",
+      "start": {
+        "line": 19,
+        "col": 13,
+        "offset": 519
+      },
+      "end": {
+        "line": 19,
+        "col": 52,
+        "offset": 558
+      },
+      "extra": {
+        "message": "balance_cents не имеет CHECK >= 0; база допускает нарушение финансового инварианта.",
+        "metadata": {
+          "cwe": "CWE-20",
+          "confidence": "HIGH",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "ERROR",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.db.no-transaction-foreign-key",
+      "path": "microservice/app/db.py",
+      "start": {
+        "line": 25,
+        "col": 13,
+        "offset": 713
+      },
+      "end": {
+        "line": 25,
+        "col": 44,
+        "offset": 744
+      },
+      "extra": {
+        "message": "from_account_id в таблице transactions не связан внешним ключом с accounts.",
+        "metadata": {
+          "cwe": "CWE-754",
+          "confidence": "HIGH",
+          "category": "correctness",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "WARNING",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.db.no-check-on-transaction-amount",
+      "path": "microservice/app/db.py",
+      "start": {
+        "line": 27,
+        "col": 13,
+        "offset": 801
+      },
+      "end": {
+        "line": 27,
+        "col": 41,
+        "offset": 829
+      },
+      "extra": {
+        "message": "Таблица transactions не ограничивает amount_cents положительными значениями.",
+        "metadata": {
+          "cwe": "CWE-20",
+          "confidence": "HIGH",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "WARNING",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.main.invalid-auth-import",
+      "path": "microservice/app/main.py",
+      "start": {
+        "line": 3,
+        "col": 1,
+        "offset": 71
+      },
+      "end": {
+        "line": 3,
+        "col": 33,
+        "offset": 103
+      },
+      "extra": {
+        "message": "Импорт user_id не соответствует функции get_current_user_id в security.py; блокер запуска приложения.",
+        "metadata": {
+          "category": "availability",
+          "confidence": "HIGH",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "INFO",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.main.invalid-schema-imports",
+      "path": "microservice/app/main.py",
+      "start": {
+        "line": 4,
+        "col": 1,
+        "offset": 104
+      },
+      "end": {
+        "line": 4,
+        "col": 42,
+        "offset": 145
+      },
+      "extra": {
+        "message": "TransferIn/TxOut не объявлены в schemas.py; блокер запуска приложения.",
+        "metadata": {
+          "category": "availability",
+          "confidence": "HIGH",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "INFO",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.auth.untrusted-header",
+      "path": "microservice/app/security.py",
+      "start": {
+        "line": 3,
+        "col": 1,
+        "offset": 43
+      },
+      "end": {
+        "line": 13,
+        "col": 73,
+        "offset": 537
+      },
+      "extra": {
+        "message": "Идентификатор клиента берется из произвольного HTTP-заголовка; нет проверки токена, сессии или подписи.",
+        "metadata": {
+          "cwe": "CWE-306",
+          "confidence": "HIGH",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "ERROR",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "manual.idor.unauthenticated-header-identity",
+      "path": "microservice/app/security.py",
+      "start": {
+        "line": 3,
+        "col": 1
+      },
+      "end": {
+        "line": 13,
+        "col": 73
+      },
+      "extra": {
+        "message": "IDOR/BOLA: GET /transactions доверяет неподтверждённому X-User-Id. Изменив числовой идентификатор в заголовке, клиент может обращаться к чужой истории транзакций. Источник: app/security.py, CRUD фильтрует owner_user_id по переданному user_id. Рекомендуется проверяемая аутентификация (JWT/OIDC/session) и авторизация объекта по реальному subject.",
+        "severity": "ERROR",
+        "lines": "async def get_current_user_id(x_user_id: str | None = Header(default=None)) -> int:\n    \"\"\"\n    УЧЕБНО: примитивная идентификация.\n    В реальном проекте тут должен быть JWT/OAuth2 и т.д.\n    \"\"\"\n    if not x_user_id:\n        raise HTTPException(status_code=401, detail=\"Missing X-User-Id header\")\n    try:\n        return int(x_user_id)\n    except ValueError:\n        raise HTTPException(status_code=400, detail=\"Invalid X-User-Id\")",
+        "metadata": {
+          "cwe": "CWE-639 / CWE-862",
+          "category": "security",
+          "finding_origin": "Manual source review",
+          "analysis_type": "Manual IDOR / broken authorization assessment",
+          "assessment": "confirmed_source_code_weakness_not_dynamically_exploited",
+          "reviewer_verified": true,
+          "test_status": "static_review_only",
+          "note": "Отдельно добавлено вручную согласно условию конкурса; это не результат правила Semgrep."
+        }
+      }
+    },
+    {
+      "check_id": "bank.auth.client-controlled-identity",
+      "path": "microservice/app/security.py",
+      "start": {
+        "line": 11,
+        "col": 9,
+        "offset": 420
+      },
+      "end": {
+        "line": 11,
+        "col": 30,
+        "offset": 441
+      },
+      "extra": {
+        "message": "Клиент сам задаёт X-User-Id, а идентичность не проверяется: подмена пользователя и доступ к чужим банковским данным.",
+        "metadata": {
+          "cwe": "CWE-287",
+          "confidence": "HIGH",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "ERROR",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.deploy.hardcoded-db-password",
+      "path": "microservice/docker-compose.yml",
+      "start": {
+        "line": 7,
+        "col": 7,
+        "offset": 84
+      },
+      "end": {
+        "line": 7,
+        "col": 34,
+        "offset": 111
+      },
+      "extra": {
+        "message": "Пароль администратора PostgreSQL задан прямо в docker-compose.yml и равен postgres.",
+        "metadata": {
+          "cwe": "CWE-798",
+          "confidence": "HIGH",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "ERROR",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.deploy.exposed-postgresql",
+      "path": "microservice/docker-compose.yml",
+      "start": {
+        "line": 11,
+        "col": 10,
+        "offset": 186
+      },
+      "end": {
+        "line": 11,
+        "col": 19,
+        "offset": 195
+      },
+      "extra": {
+        "message": "Порт PostgreSQL 5432 опубликован на интерфейсах хоста, а не только во внутренней сети.",
+        "metadata": {
+          "cwe": "CWE-668",
+          "confidence": "HIGH",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "ERROR",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.deploy.exposed-redis",
+      "path": "microservice/docker-compose.yml",
+      "start": {
+        "line": 18,
+        "col": 10,
+        "offset": 299
+      },
+      "end": {
+        "line": 18,
+        "col": 19,
+        "offset": 308
+      },
+      "extra": {
+        "message": "Порт Redis 6379 опубликован на хосте без указанной аутентификации/TLS.",
+        "metadata": {
+          "cwe": "CWE-668",
+          "confidence": "HIGH",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "ERROR",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.deploy.admin-connection-string",
+      "path": "microservice/docker-compose.yml",
+      "start": {
+        "line": 23,
+        "col": 21,
+        "offset": 368
+      },
+      "end": {
+        "line": 23,
+        "col": 70,
+        "offset": 417
+      },
+      "extra": {
+        "message": "API использует суперпользователя PostgreSQL и пароль в открытой строке подключения.",
+        "metadata": {
+          "cwe": "CWE-250",
+          "confidence": "HIGH",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "ERROR",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "bank.deploy.unprotected-api-port",
+      "path": "microservice/docker-compose.yml",
+      "start": {
+        "line": 26,
+        "col": 10,
+        "offset": 476
+      },
+      "end": {
+        "line": 26,
+        "col": 19,
+        "offset": 485
+      },
+      "extra": {
+        "message": "REST API опубликован по 8000; TLS-терминация и gateway в предоставленном составе отсутствуют.",
+        "metadata": {
+          "cwe": "CWE-319 (deployment-dependent)",
+          "confidence": "MEDIUM",
+          "category": "security",
+          "finding_origin": "Semgrep CLI custom rule",
+          "assessment": "pattern_match_not_automatically_exploit_proof"
+        },
+        "severity": "WARNING",
+        "fingerprint": "requires login",
+        "lines": "requires login",
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    }
+  ],
+  "errors": [],
+  "paths": {
+    "scanned": [
+      "microservice/app/config.py",
+      "microservice/app/crud.py",
+      "microservice/app/db.py",
+      "microservice/app/main.py",
+      "microservice/app/redis_client.py",
+      "microservice/app/schemas.py",
+      "microservice/app/security.py",
+      "microservice/docker-compose.yml"
+    ]
+  },
+  "time": {
+    "rules": [],
+    "rules_parse_time": 0.03351759910583496,
+    "profiling_times": {
+      "config_time": 0.16918396949768066,
+      "core_time": 0.29540181159973145,
+      "ignores_time": 0.0,
+      "total_time": 0.4755871295928955
+    },
+    "parsing_time": {
+      "total_time": 0.05631899833679199,
+      "per_file_time": {
+        "mean": 0.004022785595485142,
+        "std_dev": 3.0250571887617e-05
+      },
+      "very_slow_stats": {
+        "time_ratio": 0.0,
+        "count_ratio": 0.0
+      },
+      "very_slow_files": []
+    },
+    "scanning_time": {
+      "total_time": 0.07689690589904785,
+      "per_file_time": {
+        "mean": 0.009612113237380981,
+        "std_dev": 4.3162411791364264e-05
+      },
+      "very_slow_stats": {
+        "time_ratio": 0.0,
+        "count_ratio": 0.0
+      },
+      "very_slow_files": []
+    },
+    "matching_time": {
+      "total_time": 0.010556697845458984,
+      "per_file_and_rule_time": {
+        "mean": 0.0007540498461042132,
+        "std_dev": 2.1385144986179137e-06
+      },
+      "very_slow_stats": {
+        "time_ratio": 0.0,
+        "count_ratio": 0.0
+      },
+      "very_slow_rules_on_files": []
+    },
+    "tainting_time": {
+      "total_time": 0.0,
+      "per_def_and_rule_time": {
+        "mean": 0.0,
+        "std_dev": 0.0
+      },
+      "very_slow_stats": {
+        "time_ratio": 0.0,
+        "count_ratio": 0.0
+      },
+      "very_slow_rules_on_defs": []
+    },
+    "fixpoint_timeouts": [],
+    "prefiltering": {
+      "project_level_time": 0.0,
+      "file_level_time": 0.0,
+      "rules_with_project_prefilters_ratio": 0.0,
+      "rules_with_file_prefilters_ratio": 1.0,
+      "rules_selected_ratio": 0.18446601941747573,
+      "rules_matched_ratio": 0.18446601941747573
+    },
+    "targets": [],
+    "total_bytes": 0,
+    "max_memory_bytes": 134301696
+  },
+  "engine_requested": "OSS",
+  "skipped_rules": [],
+  "profiling_results": [],
+  "manual_findings": [
+    {
+      "check_id": "manual.idor.unauthenticated-header-identity",
+      "path": "microservice/app/security.py",
+      "line": 3,
+      "classification": "manual_review",
+      "severity": "ERROR"
+    },
+    {
+      "check_id": "manual.idor.unauthenticated-transfer-impersonation",
+      "path": "microservice/app/crud.py",
+      "line": 5,
+      "classification": "manual_review",
+      "severity": "ERROR"
+    }
+  ],
+  "scan_context": {
+    "scanner": "Semgrep OSS 1.186.0",
+    "custom_rules_file": "semgrep-rules.yml",
+    "custom_rule_matches": 19,
+    "community_rule_matches": 0,
+    "manual_idor_findings": 2,
+    "total_records": 21,
+    "source": "microservice source tree, original files unchanged",
+    "methodology": "Custom Semgrep scan + community registry scan + explicit manual security review",
+    "classification_note": "19 rule matches are not 19 distinct proven exploitable vulnerabilities. INFO matches include startup errors and SQL injection review-only.",
+    "SQL_injection_note": "The search variable in crud.py is passed as asyncpg positional parameter; the observed dynamic SQL text uses server-derived parameter index. SQL injection is NOT confirmed in provided code."
+  }
+}
